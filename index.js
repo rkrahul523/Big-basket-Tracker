@@ -72,11 +72,10 @@ app.get('/getslot', function (req, res) {
 
    async function getPic() {
       //comment headless
-      const browser = await puppeteer.launch();
-//       {
-//          headless: false,
-//          slowMo: 10
-//       });
+      const browser = await puppeteer.launch({
+headless: true,
+    args: ["--no-sandbox"]
+  });
       const page = await browser.newPage();
       await page.setViewport({
          width: 1100,
@@ -165,50 +164,7 @@ app.get('/getslot', function (req, res) {
 
 
 
-      // await page.click(cart);
-      // await page.waitFor(7000)
-      // await page.click(checkoutselector);
-
-      //cart operation iterate here
-     /* while (obj.iterate--) {
-         await page.waitFor(12000)
-         await page.click(cart);
-         await page.waitFor(2000)
-         await page.click(checkoutselector);
-         
-         await page.waitFor(1000)
-         if (await page.$(noslotsavailable) !== null) {
-            await page.click(noslotsavailable)
-         }
-         else {
-            await page.screenshot({ path: 'google.png' });
-            client.messages
-               .create({
-                  body: 'Hurray Rahul!! slot available',
-                  from: '+18156688642',
-                  to: rahulno
-               })
-               .then(message => console.log(message, message.sid));
-            res.send({ status: 'success', time: new Date() })
-
-         }
-
-         if (obj.iterate == 0) {
-            await browser.close();
-            console.log("exiting application")
-            client.messages
-               .create({
-                  body: 'Sorry Rahul!! slot not available',
-                  from: '+18156688642',
-                  to: rahulno
-               })
-               .then(message => console.log(message, message.sid));
-            res.send({ status: 'failed', time: new Date() })
-            break;
-         }
-
-
-      }*/
+   
 
 
    
