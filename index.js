@@ -67,7 +67,7 @@ app.post('/postmob', function (req, res) {
 
 
 // endpoint to the p[rescribed slot if available
-app.get('/getslot', function (req, res) {
+app.get('/getslot', async function (req, res) {
    console.log("get slot called")
 
    async function getPic() {
@@ -169,7 +169,7 @@ headless: true,
 
    
 
-   getPic();
+   await getPic();
 
 
 
