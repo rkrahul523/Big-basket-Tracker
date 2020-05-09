@@ -83,7 +83,7 @@ const browser = await puppeteer.launch({ headless: true, args:['--no-sandbox'] }
       await page.click(USERNAME_SELECTOR);
 
 
-
+console.log("entering mob no.")
       await page.waitFor(3000)
       await page.type(USERNAME_SELECTOR, obj.mob, { delay: 2 });
       await page.waitFor(5000)
@@ -91,19 +91,23 @@ const browser = await puppeteer.launch({ headless: true, args:['--no-sandbox'] }
       await page.click(loginbutton);
 
       await page.waitFor(26000)
+      console.log("entering otp")
       await page.type(inputfieldsforOTP, obj.otp, { delay: 3 })
       await page.waitFor(2000)
       await page.click(loginbuttonfinal);
       await page.waitFor(10000)
+      console.log("login success")
 
 
       while (obj.iterate--) {
+         console.log("checking for slots")
          await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
       await page.waitFor(10000)
       await page.click(downarrow);
       await page.waitFor(7000)
 
       if (await page.$(slotavailabletext) !== null) {
+          console.log("slot text available")
          const element = await page.$(slotavailabletext);
          const text = await page.evaluate(element => element.textContent, element);
 
