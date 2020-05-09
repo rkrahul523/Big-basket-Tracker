@@ -1,3 +1,4 @@
+var PORT = process.env.PORT || 5000;
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
@@ -45,6 +46,10 @@ const authToken = 'cafad106119d0afe827d6b5f06f32c93';
 const client = require('twilio')(accountSid, authToken);
 
 
+app.get('/', function (req, res) {
+   
+   res.send( "api started working" )
+})
 
 
 // endpoint to post otp
@@ -67,11 +72,11 @@ app.get('/getslot', function (req, res) {
 
    async function getPic() {
       //comment headless
-      const browser = await puppeteer.launch(
-      {
-         headless: false,
-         slowMo: 10
-      });
+      const browser = await puppeteer.launch();
+//       {
+//          headless: false,
+//          slowMo: 10
+//       });
       const page = await browser.newPage();
       await page.setViewport({
          width: 1100,
@@ -218,4 +223,4 @@ app.get('/getslot', function (req, res) {
 
 
 
-app.listen(4500, () => { console.log(`listening ${4500}`) })
+app.listen(PORT, () => { console.log(`listening ${PORT}`) })
