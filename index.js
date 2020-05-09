@@ -72,7 +72,7 @@ app.get('/getslot', async function (req, res) {
 
    async function getPic() {
       //comment headless
-      const browser = await puppeteer.launch({ headless: isHeadless, args}) 
+     
 const browser = await puppeteer.launch({ headless: true, args:['--no-sandbox', '--disable-setuid-sandbox'] })
       const page = await browser.newPage();
       await page.setViewport({
