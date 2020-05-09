@@ -98,9 +98,9 @@ console.log("entering mob no.")
       await page.waitFor(10000)
       console.log("login success")
 
-
+  var counting=1;
       while (obj.iterate--) {
-         console.log("checking for slots")
+         console.log(`checking for slots for ${counting++}`)
          await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
       await page.waitFor(10000)
       await page.click(downarrow);
