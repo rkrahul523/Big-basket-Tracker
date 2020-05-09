@@ -30,7 +30,6 @@ const inputfieldsforOTP = '#otp'
 const loginbuttonfinal = '#login > login > div > div:nth-child(2) > form > button'
 
 
-
 const cart = '#navbar-main > div > bigbasket-cart-template > div > div.hidden-md.hidden-lg > div > div > a > i'
 const checkoutselector = ' #checkout > p'
 const noslotsavailable = '#noSlotModal > div > div.slotmodal-footer > button'
@@ -73,7 +72,7 @@ app.get('/getslot', async function (req, res) {
    async function getPic() {
       //comment headless
      
-const browser = await puppeteer.launch({ headless: true, args:['--no-sandbox', '--disable-setuid-sandbox'] })
+const browser = await puppeteer.launch({ headless: true, args:['--no-sandbox'] })
       const page = await browser.newPage();
       await page.setViewport({
          width: 1100,
