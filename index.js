@@ -73,7 +73,7 @@ app.get('/getslot', async function (req, res) {
    async function getPic() {
       //comment headless
       const browser = await puppeteer.launch({
-headless: true,
+headless: false,
     args: ["--no-sandbox"]
   });
       const page = await browser.newPage();
