@@ -5,18 +5,29 @@ var bodyParser = require('body-parser');
 var fs = require('fs');
 var cors = require('cors');
 var detailsdb = './details.json'
-// app.use(cors())
+
 
 // app.use(cors({credentials: true, origin: 'http://localhost:4200'}));
 
 app.use(function (req, res, next) {
    //Enabling CORS
-   res.header('Access-Control-Allow-Origin', '*');
-   res.header('Access-Control-Allow-Methods', 'Origin,X-Requested-With,Content-type,Accept');
+
+   res.set('Access-Control-Allow-Credentials', 'true')
+   res.set('Access-Control-Allow-Origin', '*')
+   res.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
+   res.set('Access-Control-Allow-Headers', 'Content-Type')
+   // let allowedOrigins = ["http://ServerA:3000", "http://localhost:4200"]
+   // let origin = req.headers.origin;
+   // console.log(origin)
+   // if (allowedOrigins.includes(origin)) {
+   //   res.header("Access-Control-Allow-Origin", origin); // restrict it to the required domain
+   // }
 
    next();
 });
 
+
+//  app.use(cors({credentials: false, origin: true}));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -24,11 +35,16 @@ app.use(bodyParser.json());
 
 //chat
 
-let http = require('http');
-let server = http.Server(app);
+// let http = require('http');
+// let server = http.Server(app);
+
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+
+
 
 let socketIO = require('socket.io');
-let io = socketIO(server);
+// let io = socketIO(server, { origins: '*:*'});
 
 
 // const puppeteer = require('puppeteer');
@@ -191,14 +207,13 @@ console.log("entering mob no.")
 
 
 io.on('connection', (socket) => {
-   console.log('user connected');
-
+   console.log('a user connected');
    socket.on('new-message', (message) => {
-     console.log(message);
-   });
+      console.log(message);
+    });
 });
 
 
 
 
-app.listen(PORT, () => { console.log(`listening ${PORT}`) })
+http.listen(PORT, () => { console.log(`listening ${PORT}`) })
