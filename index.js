@@ -210,7 +210,7 @@ io.on('connection', (socket) => {
    console.log('a user connected');
    socket.on('waychat', (message) => {
       console.log(message);
-      io.emit(message);
+      io.emit(  'waychat', message);
     });
     
 });
