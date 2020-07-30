@@ -5,7 +5,10 @@ var bodyParser = require('body-parser');
 var fs = require('fs');
 var cors = require('cors');
 var detailsdb = './details.json'
-app.use(cors())
+// app.use(cors())
+
+// app.use(cors({credentials: true, origin: 'http://localhost:4200'}));
+
 app.use(function (req, res, next) {
    //Enabling CORS
    res.header('Access-Control-Allow-Origin', '*');
@@ -19,7 +22,16 @@ app.use(bodyParser.json());
 
 
 
-const puppeteer = require('puppeteer');
+//chat
+
+let http = require('http');
+let server = http.Server(app);
+
+let socketIO = require('socket.io');
+let io = socketIO(server);
+
+
+// const puppeteer = require('puppeteer');
 const USERNAME_SELECTOR = '#login > login > div > form > div:nth-child(1) > div > label';
 const obj = { mob: '7979835401', otp: '123456', iterate: 4 }
 const inputfield = '#root > div > form > div > div > input';
@@ -176,6 +188,15 @@ console.log("entering mob no.")
 
 });
 
+
+
+io.on('connection', (socket) => {
+   console.log('user connected');
+
+   socket.on('new-message', (message) => {
+     console.log(message);
+   });
+});
 
 
 
