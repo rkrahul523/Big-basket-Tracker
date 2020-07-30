@@ -208,10 +208,17 @@ console.log("entering mob no.")
 
 io.on('connection', (socket) => {
    console.log('a user connected');
-   socket.on('new-message', (message) => {
+   socket.on('waychat', (message) => {
       console.log(message);
+      io.emit(message);
     });
+    
 });
+
+io.on('waychat', (message) => {
+   console.log("message is",message)
+   io.emit(message);
+ });
 
 
 
