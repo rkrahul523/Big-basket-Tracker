@@ -6,6 +6,7 @@ var fs = require('fs');
 var cors = require('cors');
 var detailsdb = './details.json'
 const axios = require('axios');
+const path = require('path');
 
 // app.use(cors({credentials: true, origin: 'http://localhost:4200'}));
 
@@ -73,6 +74,7 @@ const accountSid = 'ACe13dbe41143f6de109884291bbfb2817';
 const authToken = 'cafad106119d0afe827d6b5f06f32c93';
 const client = require('twilio')(accountSid, authToken);
 
+
 const details = {
    firstName: 'Rohit Kumar',
    email: 'rkrah523@gmail.com',
@@ -135,6 +137,16 @@ app.get('/startOrder1', async function (req, res) {
 
 })
 
+app.get('/image', (req, res) => {
+   const imageName = "example.jpg"
+   const imagePath = path.join(__dirname, imageName);
+console.log(imagePath)
+   fs.exists(imagePath, exists => {
+       if (exists) res.sendFile(imagePath);
+       else res.status(400).send('Error: Image does not exists');
+   });
+});
+
 
 // endpoint to the p[rescribed slot if available
 app.get('/startOrder', async function (req, res) {
@@ -150,34 +162,36 @@ app.get('/startOrder', async function (req, res) {
          height: 700,
       });
       await page.goto('https://mahashivarathri.org/en/rudraksha-diksha');
+      io.emit('waychat', `Page Opens ,with ${details.mob}`);
       await page.waitFor(10000)
+      await page.screenshot({ path: 'example.jpg' });
       await page.click(RECIEVE_FOR_FREE);
       await page.waitFor(2000)
-      //  await page.screenshot({ path: 'example.png' });
+        await page.screenshot({ path: 'example.jpg' });
       // res.write("foo");
-
-      io.emit('waychat', `Page Opens ,with ${details.mob}`);
 
       await page.type(FIRST_NAME, details.firstName, { delay: 100 });
       await page.type(EMAIL, details.email, { delay: 10 });
       await page.type(PINCODE, details.pin, { delay: 1000 });
       // res.write("bar");
+      await page.screenshot({ path: 'example.jpg' });
       await page.type(HOUSE, details.house, { delay: 100 });
       await page.type(AREA, details.area, { delay: 100 });
       await page.type(LANDMARK, details.landmark, { delay: 100 });
       await page.type(CONTACT, details.mob, { delay: 1000 });
-
+      await page.screenshot({ path: 'example.jpg' });
 
 
       await page.click(OUTSIDE_CLICK);
       await page.waitFor(500)
-
+      await page.screenshot({ path: 'example.jpg' });
       if (await page.$(ERROR_SELECTOR) !== null) {
 
          const element = await page.$(ERROR_SELECTOR);
          const text = await page.evaluate(element => element.textContent, element);
          if (text == "!First-time registrants only") {
             console.log("found")
+            await page.screenshot({ path: 'example.jpg' });
             io.emit('waychat', `DUPLICATE USER`);
             res.send({ status: false, message: "duplicate user" })
          }
@@ -188,13 +202,16 @@ app.get('/startOrder', async function (req, res) {
             await page.waitFor(100)
             await page.click(CONFIRM_OTP);
             io.emit('waychat', `WAITING FOR OTP`);
+            await page.screenshot({ path: 'example.jpg' });
+      //
             await page.waitFor(30000)
-
+            await page.screenshot({ path: 'example.jpg' });
             io.emit('waychat', `Entering Otp: ${details.otp}`);
             await page.type(CODEBOX_1, details.otp, { delay: 1000 });
             await page.click(VERIFY_OTP);
+            await page.screenshot({ path: 'example.jpg' });
             await page.waitFor(10000)
-          
+            await page.screenshot({ path: 'example.jpg' });
             if (await page.$(INVALID_OTP) !== null) {
 
                const element = await page.$(INVALID_OTP);
@@ -225,10 +242,12 @@ app.get('/startOrder', async function (req, res) {
             else{
                {
                   io.emit('waychat', `OTP Verified`);
+                  await page.screenshot({ path: 'example.jpg' });
                   await page.waitFor(5000)
                   await page.click(SKIP_SELECTOR);
-
+                  await page.screenshot({ path: 'example.jpg' });
                   await page.waitFor(3000)
+                  await page.screenshot({ path: 'example.jpg' });
                   // await page.screenshot({ path: 'example.png' });
                   //await page.waitFor(4000)
                   await browser.close();
