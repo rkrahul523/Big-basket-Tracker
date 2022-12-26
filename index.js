@@ -46,8 +46,7 @@ const io = require('socket.io')(http);
 let socketIO = require('socket.io');
 // let io = socketIO(server, { origins: '*:*'});
 
-
-// const puppeteer = require('puppeteer');
+ const puppeteer = require('puppeteer');
 const USERNAME_SELECTOR = '#login > login > div > form > div:nth-child(1) > div > label';
 const obj = { mob: '7979835401', otp: '123456', iterate: 4 }
 const inputfield = '#root > div > form > div > div > input';
@@ -66,6 +65,9 @@ const downarrow='#headerControllerId > header > div > div > div > div > ul > li:
 const slottext='#headerControllerId > header > div > div > div > div > ul > li:nth-child(2) > div > div > div.other-address.ng-scope > ul > li > a > div'
 const slotavailabletext='#headerControllerId > header > div > div > div > div > ul > li:nth-child(2) > div > div > div.other-address.ng-scope > ul > li > a > div > div > div'
 
+
+
+
 let rahulno = '+917979835401'
 
 const accountSid = 'ACe13dbe41143f6de109884291bbfb2817';
@@ -73,10 +75,10 @@ const authToken = 'cafad106119d0afe827d6b5f06f32c93';
 const client = require('twilio')(accountSid, authToken);
 
 
-app.get('/', function (req, res) {
+// app.get('/', function (req, res) {
    
-   res.send( "api started working" )
-})
+//    res.send( "api started working" )
+// })
 
 
 // endpoint to post otp
@@ -91,6 +93,7 @@ app.post('/postmob', function (req, res) {
    obj.iterate = parseInt(req.body.iterate);
    res.send({ status: "success" })
 })
+const RECIEVE_FOR_FREE=`body > div.wrap > div.benefits-section > div.content > a`
 
 
 // endpoint to the p[rescribed slot if available
@@ -100,7 +103,7 @@ app.get('/getslot', async function (req, res) {
    async function getPic() {
       //comment headless
      
-const browser = await puppeteer.launch({ headless: true, args:['--no-sandbox'] })
+const browser = await puppeteer.launch({ headless: false, args:['--no-sandbox'] })
       const page = await browser.newPage();
       await page.setViewport({
          width: 1100,
@@ -204,6 +207,60 @@ console.log("entering mob no.")
 
 });
 
+
+// endpoint to the p[rescribed slot if available
+app.get('/', async function (req, res) {
+   console.log("api place order hitted")
+
+   async function getPic() {
+      //comment headless
+     
+     const browser = await puppeteer.launch({ headless: true, args:['--no-sandbox'] })
+      const page = await browser.newPage();
+      await page.setViewport({
+         width: 1100,
+         height: 700,
+     });
+      await page.goto('https://mahashivarathri.org/en/rudraksha-diksha');
+      await page.waitFor(10000)
+      await page.click(RECIEVE_FOR_FREE);
+      await page.waitFor(2000)
+      await page.screenshot({path: 'example.png'});
+      await browser.close();
+// console.log("entering mob no.")
+//       await page.waitFor(3000)
+//       await page.type(USERNAME_SELECTOR, obj.mob, { delay: 2 });
+//       await page.waitFor(5000)
+//       // await page.keyboard.type(obj.mob);
+//       await page.click(loginbutton);
+
+//       await page.waitFor(26000)
+//       console.log("entering otp")
+//       await page.type(inputfieldsforOTP, obj.otp, { delay: 3 })
+//       await page.waitFor(2000)
+//       await page.click(loginbuttonfinal);
+//       await page.waitFor(10000)
+//       console.log("login success")
+
+  
+
+
+}
+
+    
+
+
+
+   
+
+
+   
+
+   await getPic();
+
+
+
+});
 
 
 io.on('connection', (socket) => {
