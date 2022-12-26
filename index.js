@@ -16,12 +16,12 @@ app.use(function (req, res, next) {
    res.set('Access-Control-Allow-Origin', '*')
    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
    res.set('Access-Control-Allow-Headers', 'Content-Type')
-   // let allowedOrigins = ["http://ServerA:3000", "http://localhost:4200"]
-   // let origin = req.headers.origin;
-   // console.log(origin)
-   // if (allowedOrigins.includes(origin)) {
-   //   res.header("Access-Control-Allow-Origin", origin); // restrict it to the required domain
-   // }
+   let allowedOrigins = ["https://bbtracker.onrender.com", "http://localhost:4200"]
+   let origin = req.headers.origin;
+   console.log(origin)
+   if (allowedOrigins.includes(origin)) {
+     res.header("Access-Control-Allow-Origin", origin); // restrict it to the required domain
+   }
 
    next();
 });
