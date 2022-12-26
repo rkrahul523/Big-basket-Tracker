@@ -227,6 +227,8 @@ app.get('/', async function (req, res) {
       await page.waitFor(2000)
       await page.screenshot({path: 'example.png'});
       await browser.close();
+
+      res.send({status: 200})
 // console.log("entering mob no.")
 //       await page.waitFor(3000)
 //       await page.type(USERNAME_SELECTOR, obj.mob, { delay: 2 });
