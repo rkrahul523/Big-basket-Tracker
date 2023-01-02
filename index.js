@@ -7,6 +7,16 @@ var cors = require('cors');
 var detailsdb = './details.json'
 const axios = require('axios');
 const path = require('path');
+const Pool = require('pg').Pool;
+const pool = new Pool({
+   user: 'rkrah523',
+   host: 'shopdb-instance.cpbnl5mbaeef.ap-northeast-1.rds.amazonaws.com',
+   database: 'shopdb',
+   password: 'Silicon123#',
+   port: 5432,
+});
+
+const { findOTP } = require('./util.js')
 
 // app.use(cors({credentials: true, origin: 'http://localhost:4200'}));
 
@@ -21,7 +31,7 @@ app.use(function (req, res, next) {
    let origin = req.headers.origin;
    console.log(origin)
    if (allowedOrigins.includes(origin)) {
-     res.header("Access-Control-Allow-Origin", origin); // restrict it to the required domain
+      res.header("Access-Control-Allow-Origin", origin); // restrict it to the required domain
    }
 
    next();
@@ -75,7 +85,7 @@ const authToken = 'cafad106119d0afe827d6b5f06f32c93';
 const client = require('twilio')(accountSid, authToken);
 
 
-const details = {
+const details1 = {
    firstName: 'Rohit Kumar',
    email: 'rkrah523@gmail.com',
    pin: '800006',
@@ -84,17 +94,105 @@ const details = {
    landmark: 'near NIT gate No. 2 ',
    mob: '7979835402',
    otp: '123456'
-
-
 }
 
+const details = {
+   firstName: 'Rahul Kumar',
+   email: 'rkrahul523@gmail.com',
+   pin: '829109',
+   house: 'at giddi c q no 1b 38',
+   area: 'Jh MOB 7979835401',
+   landmark: 'near durga mundap ',
+   mob: '7979835402',
+   otp: '123456'
+}
+
+const getAll = async (req, res) => {
+   const client = await pool.connect();
+   try {
+      let results = await client.query(
+         `SELECT * FROM public.All_Mobile_Records`);
+      res.status(201).json(results.rows);
+   } finally {
+      // Make sure to release the client before any error handling,
+      // just in case the error handling itself throws an error.
+      client.release();
+   }
+}
+
+const createRecords = async (req, res) => {
+   const name = details.firstName;
+   const Mobile = req.body.mob;
+   const Address = details;
+   const client = await pool.connect();
+   try {
+      let results = await client.query(
+         `INSERT INTO public.All_Mobile_Records(Mobile, Address,  name) VALUES ($1, $2, $3)`
+         , [Mobile, Address, name]);
+      res.status(201).json({ status: true, message: `User Added with Mob${Mobile}` });
+   } finally {
+      // Make sure to release the client before any error handling,
+      // just in case the error handling itself throws an error.
+      client.release();
+   }
+}
+
+//alreadyRegisted 
+//wrongOtp
+//isDuplicate
+const updateRecords = async (data, res) => {
+   //const data= {key: 'wrongOtp', value: true, mob: '7979835402'}
+
+   const client = await pool.connect();
+   try {
+      let results = await client.query(
+         `UPDATE public.All_Mobile_Records
+      SET ${data.key}=${data.value}, SET lastUpdated=${new Date()}
+      WHERE Mobile=${data.mob}`);
+      return results;
+      //res.status(200).json({ status: true, message: `User modified with Mob${Mobile}`});
+   } catch(e){
+      console.log("error while updating ", e)
+      throw error;
+   }
+   finally {
+      // Make sure to release the client before any error handling,
+      // just in case the error handling itself throws an error.
+      client.release();
+   }
+   
+}
+
+app.get(`/getallRecords`, async (req, res) => {
+   // const { 
+   //   uid, displayName, email, 
+   //   emailVerified, photoURL 
+   // } = JSON.parse(req.body.user);
+
+   const getall = await getAll(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         "code": err.code,
+         "message": err.message
+      });
+   });
 
 
 
-// app.get('/', function (req, res) {
 
-//    res.send( "api started working" )
-// })
+});
+const otpSelecter = `body > linkrel="canonical" > section > div > div.row > div.col-sm-10 > table:nth-child(4) > tbody > tr > td:nth-child(3)`
+
+
+
+app.get('/', async (req, res) => {
+
+
+   //You will now have an array of strings
+   //[ 'One', 'Two', 'Three', 'Four' ]
+   //return findOTP(data);
+
+})
 
 
 const RECIEVE_FOR_FREE = `body > div.wrap > div.benefits-section > div.content > a`
@@ -125,10 +223,19 @@ app.post('/postotp', function (req, res) {
 })
 
 // endpoint to post mob nop. and no. of iteration to execute
-app.post('/postmob', function (req, res) {
+app.post('/postmob', async (req, res) => {
    details.mob = req.body.mob;
+   const getall = await createRecords(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+
+
    // obj.iterate = parseInt(req.body.iterate);
-   res.send({ status: "success" })
+   // res.send({ status: "success" })
 })
 
 
@@ -140,10 +247,10 @@ app.get('/startOrder1', async function (req, res) {
 app.get('/image', (req, res) => {
    const imageName = "example.jpg"
    const imagePath = path.join(__dirname, imageName);
-console.log(imagePath)
+   console.log(imagePath)
    fs.exists(imagePath, exists => {
-       if (exists) res.sendFile(imagePath);
-       else res.status(400).send('Error: Image does not exists');
+      if (exists) res.sendFile(imagePath);
+      else res.status(400).send('Error: Image does not exists');
    });
 });
 
@@ -152,10 +259,12 @@ console.log(imagePath)
 app.get('/startOrder', async function (req, res) {
    console.log("api place order hitted")
 
+   details.mob= req.query.mob;
+
    async function getPic() {
       //comment headless
 
-      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] })
+      const browser = await puppeteer.launch({ headless: false, args: ['--no-sandbox'] })
       const page = await browser.newPage();
       await page.setViewport({
          width: 1100,
@@ -167,7 +276,7 @@ app.get('/startOrder', async function (req, res) {
       await page.screenshot({ path: 'example.jpg' });
       await page.click(RECIEVE_FOR_FREE);
       await page.waitFor(2000)
-        await page.screenshot({ path: 'example.jpg' });
+      await page.screenshot({ path: 'example.jpg' });
       // res.write("foo");
 
       await page.type(FIRST_NAME, details.firstName, { delay: 100 });
@@ -193,6 +302,9 @@ app.get('/startOrder', async function (req, res) {
             console.log("found")
             await page.screenshot({ path: 'example.jpg' });
             io.emit('waychat', `DUPLICATE USER`);
+            const duplicateData = { key: 'isDuplicate', value: true, mob: details.mob }
+            await updateRecords(duplicateData, res);
+            await browser.close();
             res.send({ status: false, message: "duplicate user" })
          }
          else {
@@ -203,8 +315,48 @@ app.get('/startOrder', async function (req, res) {
             await page.click(CONFIRM_OTP);
             io.emit('waychat', `WAITING FOR OTP`);
             await page.screenshot({ path: 'example.jpg' });
-      //
+            //
             await page.waitFor(30000)
+
+
+            const otppage = await browser.newPage();
+            await page.setViewport({
+               width: 1100,
+               height: 700,
+            });
+            await otppage.goto(`https://mhs-sms.com/view-sms/91${details.mob}`);
+            await otppage.waitFor(10000)
+            await otppage.screenshot({ path: 'example.jpg' });
+
+            const data = await otppage.evaluate(() => {
+               const tds = Array.from(document.querySelectorAll('table tr td'))
+               const id = tds.filter((data, index) => index < 10)
+               return id.map((td, index) => td.innerText)
+            });
+
+            //You will now have an array of strings
+            //[ 'One', 'Two', 'Three', 'Four' ]
+            const otpfrommhs= findOTP(data);
+console.log("mhs",otpfrommhs)
+            if(otpfrommhs){
+
+               console.log("mhaas",otpfrommhs)     
+            }else{
+               
+               const notarrived = { key: 'otpNotArrived', value: true, mob: details.mob }
+           await updateRecords(notarrived, res);
+           await otppage.waitFor(10000)
+           await browser.close();
+   //res.send({ status: false, message: "not OTP" })
+            }
+
+            details.otp= otpfrommhs
+            await otppage.screenshot({ path: 'example.jpg' });
+            await otppage.waitFor(2000)
+            await otppage.close()
+
+            await page.waitFor(20000)
+
             await page.screenshot({ path: 'example.jpg' });
             io.emit('waychat', `Entering Otp: ${details.otp}`);
             await page.type(CODEBOX_1, details.otp, { delay: 1000 });
@@ -216,10 +368,13 @@ app.get('/startOrder', async function (req, res) {
 
                const element = await page.$(INVALID_OTP);
                const text = await page.evaluate(element => element.textContent, element);
-               console.log("invalid",text)
+               console.log("invalid", text)
 
                if (text == "Invalid OTP.") {
                   io.emit('waychat', `WRONG OTP`);
+                  await browser.close();
+                  const wrongOTPENtered = { key: 'wrongOtp', value: true, mob: details.mob }
+                  await updateRecords(wrongOTPENtered, res);
                   await browser.close();
                   res.send({ status: false, message: "Wrong OTP" })
                }
@@ -227,24 +382,29 @@ app.get('/startOrder', async function (req, res) {
                   io.emit('waychat', `OTP Verified`);
                   await page.waitFor(5000)
 
-                 
+
                   await page.click(SKIP_SELECTOR);
+                  const registered = { key: 'alreadyRegisted', value: true, mob: details.mob }
+                  await updateRecords(registered, res);
 
                   await page.waitFor(3000)
                   // await page.screenshot({ path: 'example.png' });
                   //await page.waitFor(4000)
                   await browser.close();
+
                   io.emit('waychat', `SUCCESSFULY PLACED`);
                   res.send({ status: true, message: "successfully placed" })
                }
 
             }
-            else{
+            else {
                {
                   io.emit('waychat', `OTP Verified`);
                   await page.screenshot({ path: 'example.jpg' });
                   await page.waitFor(5000)
                   await page.click(SKIP_SELECTOR);
+                  const registered = { key: 'alreadyRegisted', value: true, mob: details.mob }
+                  await updateRecords(registered, res);
                   await page.screenshot({ path: 'example.jpg' });
                   await page.waitFor(3000)
                   await page.screenshot({ path: 'example.jpg' });
@@ -269,7 +429,9 @@ app.get('/startOrder', async function (req, res) {
 
 
    await getPic().catch((error) => {
-     // await browser.close();
+      // await browser.close();
+      const registered = { key: 'alreadyRegisted', value: true, mob: details.mob }
+       updateRecords(registered, res);
       res.send({ status: false, message: "Some Error Occured" })
 
    });;
