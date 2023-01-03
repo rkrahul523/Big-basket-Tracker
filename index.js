@@ -264,7 +264,7 @@ app.get('/startOrder', async function (req, res) {
    async function getPic() {
       //comment headless
 
-      const browser = await puppeteer.launch({ headless: false, args: ['--no-sandbox'] })
+      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] })
       const page = await browser.newPage();
       await page.setViewport({
          width: 1100,
