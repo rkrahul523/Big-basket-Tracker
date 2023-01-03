@@ -147,13 +147,13 @@ const updateRecords = async (data, res) => {
    try {
       let results = await client.query(
          `UPDATE public.All_Mobile_Records
-      SET ${data.key}=${data.value}, SET lastUpdated=${new Date()}
+      SET ${data.key}=${data.value} , lastUpdated='${new Date()}'
       WHERE Mobile=${data.mob}`);
       return results;
       //res.status(200).json({ status: true, message: `User modified with Mob${Mobile}`});
    } catch(e){
       console.log("error while updating ", e)
-      throw error;
+      throw e;
    }
    finally {
       // Make sure to release the client before any error handling,
@@ -185,9 +185,11 @@ const otpSelecter = `body > linkrel="canonical" > section > div > div.row > div.
 
 
 
-app.get('/', async (req, res) => {
+app.get('/someError', async (req, res) => {
 
-
+   const registered = { key: 'someError', value: true, mob: details.mob }
+   await updateRecords(registered, res);
+   res.send({ status: "success" })
    //You will now have an array of strings
    //[ 'One', 'Two', 'Three', 'Four' ]
    //return findOTP(data);
@@ -254,17 +256,27 @@ app.get('/image', (req, res) => {
    });
 });
 
+app.post('/testOrder', async function (req, res) {
+   const delay = ms => new Promise(res => setTimeout(res, ms));
+  const mob= req.body.mob;
+  if(mob=='7979835402'){
+     await delay(5000); 
+     res.status(500).json({ status: true, message: "successfully placed" +mob})
+  
+  }
 
+   res.send({ status: true, message: "successfully placed" +mob})
+            
+})
 // endpoint to the p[rescribed slot if available
-app.get('/startOrder', async function (req, res) {
+app.post('/startOrder', async function (req, res) {
    console.log("api place order hitted")
 
-   details.mob= req.query.mob;
+   details.mob= req.body.mob;
 
    async function getPic() {
       //comment headless
-
-      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] })
+      const browser = await puppeteer.launch({ headless: false, args: ['--no-sandbox'] })
       const page = await browser.newPage();
       await page.setViewport({
          width: 1100,
@@ -425,13 +437,15 @@ console.log("mhs",otpfrommhs)
 
 
 
-
+const ddd=async()=>{
+   const registered = { key: 'someError', value: true, mob: details.mob }
+      await updateRecords(registered, res);
+}
 
 
    await getPic().catch((error) => {
       // await browser.close();
-      const registered = { key: 'alreadyRegisted', value: true, mob: details.mob }
-       updateRecords(registered, res);
+      //ddd();
       res.send({ status: false, message: "Some Error Occured" })
 
    });;
