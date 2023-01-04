@@ -285,6 +285,8 @@ app.post('/startOrder', async function (req, res) {
       });
       await page.goto('https://mahashivarathri.org/en/rudraksha-diksha');
       io.emit('waychat', `Page Opens ,with ${details.mob}`);
+      
+      await page.screenshot({ path: 'example.jpg' });
       await page.waitFor(10000)
       await page.screenshot({ path: 'example.jpg' });
       await page.click(RECIEVE_FOR_FREE);
@@ -303,9 +305,8 @@ app.post('/startOrder', async function (req, res) {
       await page.type(CONTACT, details.mob, { delay: 1000 });
       await page.screenshot({ path: 'example.jpg' });
 
-
       await page.click(OUTSIDE_CLICK);
-      await page.waitFor(500)
+      await page.waitFor(3000)
       await page.screenshot({ path: 'example.jpg' });
       if (await page.$(ERROR_SELECTOR) !== null) {
 
@@ -322,9 +323,9 @@ app.post('/startOrder', async function (req, res) {
          }
          else {
             await page.click(AGREE_1);
-            await page.waitFor(100)
+            await page.waitFor(3000)
             await page.click(AGREE_2);
-            await page.waitFor(100)
+            await page.waitFor(3000)
             await page.click(CONFIRM_OTP);
             io.emit('waychat', `WAITING FOR OTP`);
             await page.screenshot({ path: 'example.jpg' });
@@ -339,6 +340,7 @@ app.post('/startOrder', async function (req, res) {
             });
             await otppage.goto(`https://mhs-sms.com/view-sms/91${details.mob}`);
             await otppage.waitFor(10000)
+            window.scrollBy(0, 200);
             await otppage.screenshot({ path: 'example.jpg' });
 
             const data = await otppage.evaluate(() => {
