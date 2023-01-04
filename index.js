@@ -187,8 +187,8 @@ const otpSelecter = `body > linkrel="canonical" > section > div > div.row > div.
 
 
 app.get('/someError', async (req, res) => {
-
-   const registered = { key: 'someError', value: true, mob: details.mob }
+const mob= req.query.mob;
+   const registered = { key: 'someError', value: true,mob }
    await updateRecords(registered, res);
    res.send({ status: "success" })
    //You will now have an array of strings
@@ -342,7 +342,6 @@ app.post('/startOrder', async function (req, res) {
             await otppage.waitFor(10000)
             await otppage.keyboard.press("PageDown");
             await otppage.keyboard.press("PageDown");
-            await otppage.keyboard.press("PageDown");
             await otppage.screenshot({ path: 'example.jpg' });
 
             const data = await otppage.evaluate(() => {
@@ -451,7 +450,7 @@ const ddd=async()=>{
    await getPic().catch((error) => {
       // await browser.close();
       //ddd();
-      res.send({ status: false, message: "Some Error Occured" })
+      res.send({ status: false,mob: details.mob, message: "Some Error Occured" })
 
    });;
 
