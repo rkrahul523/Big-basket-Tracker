@@ -27,7 +27,8 @@ app.use(function (req, res, next) {
    res.set('Access-Control-Allow-Origin', '*')
    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
    res.set('Access-Control-Allow-Headers', 'Content-Type')
-   let allowedOrigins = ["https://bbtracker.onrender.com", "http://localhost:4200"]
+ 
+   let allowedOrigins = ["https://sasta-bazaar.onrender.com","https://bbtracker.onrender.com", "http://localhost:4200"]
    let origin = req.headers.origin;
    console.log(origin)
    if (allowedOrigins.includes(origin)) {
