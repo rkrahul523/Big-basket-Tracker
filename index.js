@@ -340,7 +340,9 @@ app.post('/startOrder', async function (req, res) {
             });
             await otppage.goto(`https://mhs-sms.com/view-sms/91${details.mob}`);
             await otppage.waitFor(10000)
-            window.scrollBy(0, 200);
+            await otppage.keyboard.press("PageDown");
+            await otppage.keyboard.press("PageDown");
+            await otppage.keyboard.press("PageDown");
             await otppage.screenshot({ path: 'example.jpg' });
 
             const data = await otppage.evaluate(() => {
