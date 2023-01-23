@@ -17,6 +17,7 @@ const pool = new Pool({
 });
 
 const { findOTP } = require('./util.js')
+const { createFile, validateUserDetails , getTrackingDetails, getCreatedFile , getUserDetails} = require('./dasta-util.js')
 
 // app.use(cors({credentials: true, origin: 'http://localhost:4200'}));
 
@@ -121,6 +122,22 @@ const getAll = async (req, res) => {
    }
 }
 
+
+const validateUser = async (req, res) => {
+   const client = await pool.connect();
+   // INSERT INTO public.logincred(
+   //    user_name, name, password, role, department, profile_image)
+   try {
+      let results = await client.query(
+         `SELECT * FROM public.logincred`);
+      res.status(201).json(results.rows);
+   } finally {
+      // Make sure to release the client before any error handling,
+      // just in case the error handling itself throws an error.
+      client.release();
+   }
+}
+
 const createRecords = async (req, res) => {
    const name = details.firstName;
    const Mobile = req.body.mob;
@@ -137,6 +154,8 @@ const createRecords = async (req, res) => {
       client.release();
    }
 }
+
+
 
 //alreadyRegisted 
 //wrongOtp
@@ -472,6 +491,78 @@ io.on('waychat', (message) => {
    console.log("message is", message)
    io.emit(message);
 });
+
+//Dastavez api
+
+app.get('/', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await getTrackingDetails(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error:true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+
+
+})
+
+app.post('/validate-user-details', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await validateUserDetails(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.get('/get-created-files', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await getCreatedFile(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.post('/get-user-details', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await getUserDetails(req, res).catch(err => {
+      res.status(401).json({
+         status: false,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.post('/create-file', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await createFile(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.post('/track-file', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await getTrackingDetails(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+
+
+
 
 
 
