@@ -80,6 +80,8 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
 
         if (results.rows.length) {
             let previousrecords = results.rows[0].data;
+           // console.log("previous data", JSON.stringify(previousrecords))
+
             //let newSentResults = await client.query(isPresent, [fts_id]);
 
             if (action == 'Sent' || action == 'Received') {
@@ -100,6 +102,7 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
                     action_department: action == 'Sent' ? sent_to : ''
                 }
                 previousrecords.push(newtrackData)
+               // console.log("data to insert", JSON.stringify(previousrecords))
 
                 const insertQueryToTrack = `UPDATE public.track_file_details
                 SET data='${JSON.stringify(previousrecords)}' where fts_id=${fts_id}`
@@ -310,6 +313,7 @@ const sendFiles = async (req, res) => {
                     sent_to: info.sent_to,
                     sent_date: currentTime
                 }
+               // console.log("sent data", JSON.stringify(sentData))
 
 
                 const createUpdated = await updateTracking(sentData, 'Sent')
@@ -363,8 +367,52 @@ const getReceiveFile = async (req, res) => {
         // just in case the error handling itself throws an error.
         client.release();
     }
+}
 
 
+const sendReceivedFiles = async (req, res) => {
+
+
+    const { file_info, u_id } = req.body;
+
+
+    const client = await pool.connect();
+    try {
+
+        const executeAllQuery1 = async () => {
+            for (info of file_info) {
+                const ftsId = parseInt(info.fts_id.split('FTS')[1]);
+                //console.log("ftsid",ftsId)
+                const query = `UPDATE received_file_details 
+                   SET file_status= $1 ,sent_date= $2, sent_to= $3  WHERE receive_id=${info.receive_id}`;
+                const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+                let results = await client.query(query
+                    , ['Sent', currentTime, info.sent_to]);
+              //  console.log("ftsbbbid",results)
+                const sentData = {
+                    fts_id: ftsId,
+                    comments: info.comments,
+                    u_id: u_id,
+                    sent_to: info.sent_to,
+                    sent_date: currentTime
+                }
+
+
+                const createUpdated = await updateTracking(sentData, 'Sent')
+
+            }
+            return { status: true, message: 'All queries were sent' };
+        };
+
+        const result = await executeAllQuery1();
+
+        res.status(201).json(result);
+
+    } finally {
+        // Make sure to release the client before any error handling,
+        // just in case the error handling itself throws an error.
+        client.release();
+    }
 }
 
 
@@ -372,6 +420,7 @@ const getReceiveFile = async (req, res) => {
 
 
 
+
 module.exports = {
-    createFile, validateUserDetails, getTrackingDetails, getCreatedFile, getUserDetails, sendFiles, receiveFile, getReceiveFile
+    createFile, validateUserDetails, getTrackingDetails, getCreatedFile, getUserDetails, sendFiles, receiveFile,sendReceivedFiles, getReceiveFile
 };
