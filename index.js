@@ -23,6 +23,7 @@ const { createFile,
       getCreatedFile ,
        getUserDetails,
        sendFiles,
+       getReceiveFile,
        receiveFile} = require('./dasta-util.js')
 
 // app.use(cors({credentials: true, origin: 'http://localhost:4200'}));
@@ -578,6 +579,17 @@ app.post('/track-file', async (req, res) => {
 app.post('/receive-file', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await receiveFile(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.get('/get-received-files', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await getReceiveFile(req, res).catch(err => {
       res.status(500).json({
          status: false,
          error: true,

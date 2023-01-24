@@ -331,9 +331,47 @@ const sendFiles = async (req, res) => {
 
 
 
+const getReceiveFile = async (req, res) => {
+
+    const { user_id } = req.query;
+
+
+    const client = await pool.connect();
+    try {
+        const query = `SELECT concat('FTS', fts_id) as fts_id,
+         file_title,
+         concat('NITP/', docket) as  docket,
+         file_status, document_type, priority, subject_area,
+          file_station, received_date, received_by, sent_to,
+           sent_date,
+            receive_id
+         FROM public.received_file_details where received_by= $1`;
+        let results = await client.query(query, [user_id]);
+
+        if (results.rows.length) {
+
+            const fetchedData = results.rows;
+            res.status(201).json({ status: true, message: `Received files successfully`, data:fetchedData });
+
+        } else {
+            res.status(201).json({ status: false, message: `No Records Found` });
+
+        }
+
+    } finally {
+        // Make sure to release the client before any error handling,
+        // just in case the error handling itself throws an error.
+        client.release();
+    }
+
+
+}
+
+
+
 
 
 
 module.exports = {
-    createFile, validateUserDetails, getTrackingDetails, getCreatedFile, getUserDetails, sendFiles, receiveFile
+    createFile, validateUserDetails, getTrackingDetails, getCreatedFile, getUserDetails, sendFiles, receiveFile, getReceiveFile
 };
