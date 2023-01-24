@@ -17,7 +17,13 @@ const pool = new Pool({
 });
 
 const { findOTP } = require('./util.js')
-const { createFile, validateUserDetails , getTrackingDetails, getCreatedFile , getUserDetails} = require('./dasta-util.js')
+const { createFile,
+    validateUserDetails ,
+     getTrackingDetails,
+      getCreatedFile ,
+       getUserDetails,
+       sendFiles,
+       receiveFile} = require('./dasta-util.js')
 
 // app.use(cors({credentials: true, origin: 'http://localhost:4200'}));
 
@@ -494,7 +500,7 @@ io.on('waychat', (message) => {
 
 //Dastavez api
 
-app.get('/', async (req, res) => {
+app.get('/test1', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await getTrackingDetails(req, res).catch(err => {
       res.status(500).json({
@@ -504,8 +510,6 @@ app.get('/', async (req, res) => {
          "message": err.message
       });
    })
-
-
 })
 
 app.post('/validate-user-details', async (req, res) => {
@@ -549,9 +553,31 @@ app.post('/create-file', async (req, res) => {
       });
    })
 })
+app.post('/send-files', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await sendFiles(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
 app.post('/track-file', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await getTrackingDetails(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.post('/receive-file', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await receiveFile(req, res).catch(err => {
       res.status(500).json({
          status: false,
          error: true,
