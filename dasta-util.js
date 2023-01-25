@@ -80,7 +80,7 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
 
         if (results.rows.length) {
             let previousrecords = results.rows[0].data;
-           // console.log("previous data", JSON.stringify(previousrecords))
+            // console.log("previous data", JSON.stringify(previousrecords))
 
             //let newSentResults = await client.query(isPresent, [fts_id]);
 
@@ -103,14 +103,14 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
                     action_department: action == 'Sent' ? sent_to : ''
                 }
                 previousrecords.push(newtrackData)
-               // console.log("data to insert", JSON.stringify(previousrecords))
+                // console.log("data to insert", JSON.stringify(previousrecords))
 
                 const insertQueryToTrack = `UPDATE public.track_file_details
                 SET data='${JSON.stringify(previousrecords)}' where fts_id=${fts_id}`
                 let insertResultstoTrack = await client.query(insertQueryToTrack);
-                return {message : `updated tracking data for FTS${fts_id}`}
+                return { message: `updated tracking data for FTS${fts_id}` }
             } else {
-                return { message: 'Not a valid action'};
+                return { message: 'Not a valid action' };
             }
         } else {
 
@@ -299,7 +299,7 @@ const sendFiles = async (req, res) => {
     try {
 
         const executeAllQuery = async () => {
-            let message=[];
+            let message = [];
             for (info of file_info) {
                 const ftsId = parseInt(info.fts_id.split('FTS')[1]);
                 // console.log("ftsid",ftsId)
@@ -316,8 +316,8 @@ const sendFiles = async (req, res) => {
                     sent_to: info.sent_to,
                     sent_date: currentTime
                 }
-               // console.log("sent data", JSON.stringify(sentData)
-               message.push(await updateTracking(sentData, 'Sent'))
+                // console.log("sent data", JSON.stringify(sentData)
+                message.push(await updateTracking(sentData, 'Sent'))
 
             }
             return { status: true, message };
@@ -356,7 +356,7 @@ const getReceiveFile = async (req, res) => {
         if (results.rows.length) {
 
             const fetchedData = results.rows;
-            res.status(201).json({ status: true, message: `Received files successfully`, data:fetchedData });
+            res.status(201).json({ status: true, message: `Received files successfully`, data: fetchedData });
 
         } else {
             res.status(201).json({ status: false, message: `No Records Found` });
@@ -389,7 +389,7 @@ const sendReceivedFiles = async (req, res) => {
                 const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
                 let results = await client.query(query
                     , ['Sent', currentTime, info.sent_to]);
-              //  console.log("ftsbbbid",results)
+                //  console.log("ftsbbbid",results)
                 const sentData = {
                     fts_id: ftsId,
                     comments: info.comments,
@@ -418,10 +418,45 @@ const sendReceivedFiles = async (req, res) => {
 
 
 
+const getDashboardDetails = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const ftsId = req.body.fts_id;
+        // if (ftsId.includes('FTS')) {
+        // const fts_id = parseInt(ftsId.split('FTS')[1])
+
+        const dashboardDataQuery = `select a.file_status, count(b.file_status) 
+          from (values ('Sent'), ('Created'), ('Operational')) as a(file_status)
+         left outer join created_file_details as b on b.file_status = a.file_status
+         group by a.file_status;`
+
+        let results = await client.query(dashboardDataQuery);
+        if (results.rows.length) {
+            res.status(201).json({ status: true, message: 'Dashbboard data are', data: {file_info:results.rows} });
+        } else {
+            const createUpdated = await updateTracking({ fts_id }, 'Created')
+            res.status(201).json(createUpdated);
+        }
+        // }
+        // else {
+        //     res.status(201).json({ status: false, message: 'FTS Id  is Invalid' });
+
+        // }
+    } finally {
+        // Make sure to release the client before any error handling,
+        // just in case the error handling itself throws an error.
+        client.release();
+    }
+
+
+}
+
+
+
 
 
 
 
 module.exports = {
-    createFile, validateUserDetails, getTrackingDetails, getCreatedFile, getUserDetails, sendFiles, receiveFile,sendReceivedFiles, getReceiveFile
+    createFile, validateUserDetails, getTrackingDetails, getCreatedFile, getUserDetails, sendFiles, receiveFile, sendReceivedFiles, getReceiveFile,getDashboardDetails
 };
