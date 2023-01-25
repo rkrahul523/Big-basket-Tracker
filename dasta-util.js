@@ -76,7 +76,7 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
         let results = await client.query(query, [fts_id]);
 
 
-        const userQuery = `SELECT name FROM public.logincred  WHERE u_id=$1`;
+        const userQuery = `SELECT name,department FROM public.logincred  WHERE u_id=$1`;
 
         if (results.rows.length) {
             let previousrecords = results.rows[0].data;
@@ -95,6 +95,7 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
                     updatedon: sent_date,
                     updatedby: u_id,
                     name: userDetails.rows[0].name,
+                    department: userDetails.rows[0].department,
                     //filetitle: fetchedCreateFile.file_title,
                     comments: comments,
                     remarks: '',
@@ -107,9 +108,9 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
                 const insertQueryToTrack = `UPDATE public.track_file_details
                 SET data='${JSON.stringify(previousrecords)}' where fts_id=${fts_id}`
                 let insertResultstoTrack = await client.query(insertQueryToTrack);
-                return insertResultstoTrack
+                return {message : `updated tracking data for FTS${fts_id}`}
             } else {
-                return previousrecords;
+                return { message: 'Not a valid action'};
             }
         } else {
 
@@ -125,6 +126,7 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
                     updatedby: filedetails.created_by,
                     comments: filedetails.comments,
                     filetitle: filedetails.file_title,
+                    department: userDetails.rows[0].department,
                     name: userDetails.rows[0].name,
                     remarks: '',
                     order: 1,
@@ -297,6 +299,7 @@ const sendFiles = async (req, res) => {
     try {
 
         const executeAllQuery = async () => {
+            let message=[];
             for (info of file_info) {
                 const ftsId = parseInt(info.fts_id.split('FTS')[1]);
                 // console.log("ftsid",ftsId)
@@ -313,13 +316,11 @@ const sendFiles = async (req, res) => {
                     sent_to: info.sent_to,
                     sent_date: currentTime
                 }
-               // console.log("sent data", JSON.stringify(sentData))
-
-
-                const createUpdated = await updateTracking(sentData, 'Sent')
+               // console.log("sent data", JSON.stringify(sentData)
+               message.push(await updateTracking(sentData, 'Sent'))
 
             }
-            return { status: true, message: 'All queries were sent' };
+            return { status: true, message };
         };
 
         const result = await executeAllQuery();
