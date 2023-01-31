@@ -185,14 +185,18 @@ const getTrackingDetails = async (req, res) => {
 
 const createFile = async (req, res) => {
 
-    const { file_title, document_type, priority, subject_area, file_station, user_id, comments } = req.body;
+
+    const { file_title, document_type, priority, subject_area, file_station, user_id, comments, d_department, d_year , d_fileType} = req.body;
     const client = await pool.connect();
     try {
         const query = `INSERT INTO public.created_file_details(
-            file_title, docket, file_status, document_type, priority, subject_area, file_station, creation_date, created_by, comments) VALUES ($1, $2, $3 ,$4 ,$5, $6, $7, $8, $9, $10)`
+            file_title, file_status, document_type, priority, subject_area, file_station, creation_date, created_by, comments, d_department, d_year , d_file_type) VALUES ($1, $2, $3 ,$4 ,$5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING concat('NITP/', d_department ,'/', d_year ,'/', d_file_type ,'/D', docket_number) as docket_number, concat('FTS', fts_id) as fts_id  `
         let results = await client.query(query
-            , [file_title, 2023, 'Created', document_type, priority, subject_area, file_station, new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }), user_id, comments]);
-        res.status(201).json({ status: true, message: 'File Created' });
+            , [file_title, 'Created', document_type, priority, subject_area, file_station, new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }), user_id, comments
+        ,d_department, d_year , d_fileType
+    ]);
+        res.status(201).json({ status: true, message: 'File Created' , data: results.rows});
     } finally {
         // Make sure to release the client before any error handling,
         // just in case the error handling itself throws an error.
@@ -207,7 +211,7 @@ const getCreatedFile = async (req, res) => {
     const client = await pool.connect();
 
     try {
-        const query = `SELECT concat('FTS', fts_id) as fts_id , file_title,concat('NITP/', docket) as  docket, file_status, document_type, priority, subject_area, file_station, creation_date, sent_date,sent_to   from created_file_details where created_by=${user_id}`
+        const query = `SELECT concat('FTS', fts_id) as fts_id , file_title,concat('NITP/', d_department ,'/', d_year ,'/', d_file_type ,'/D', docket_number)  as  docket, file_status, document_type, priority, subject_area, file_station, creation_date, sent_date,sent_to   from created_file_details where created_by=${user_id}`
         let results = await client.query(query)
         //console.log(JSON.stringify(results))
         res.status(201).json({ status: true, message: 'File Created', data: results.rows });
@@ -245,7 +249,7 @@ const receiveFile = async (req, res) => {
 
                 const insertCreatedQuery = `INSERT INTO received_file_details (fts_id,file_title, docket, file_status, document_type, priority, subject_area,
                      file_station, received_date, received_by)
-                 SELECT  fts_id,file_title, docket, $1, document_type, priority, subject_area, file_station, $2, $3
+                 SELECT  fts_id,file_title, concat('NITP/', d_department ,'/', d_year ,'/', d_file_type ,'/D', docket_number) as docket, $1, document_type, priority, subject_area, file_station, $2, $3
                   FROM created_file_details
                         WHERE fts_id=${ftsId}`;
                 const receivedDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
@@ -345,7 +349,7 @@ const getReceiveFile = async (req, res) => {
     try {
         const query = `SELECT concat('FTS', fts_id) as fts_id,
          file_title,
-         concat('NITP/', docket) as  docket,
+          docket,
          file_status, document_type, priority, subject_area,
           file_station, received_date, received_by, sent_to,
            sent_date,
