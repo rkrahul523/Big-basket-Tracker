@@ -25,8 +25,11 @@ const { createFile,
        sendFiles,
        getReceiveFile,
        sendReceivedFiles,
+       checkFileToReceived,
        getDashboardDetails,
        receiveFile} = require('./dasta-util.js')
+const { getManageRoles , updateManageRoles, approveUser, getAllUserDetails
+} = require('./user-functions.js')
 
 // app.use(cors({credentials: true, origin: 'http://localhost:4200'}));
 
@@ -34,8 +37,8 @@ app.use(function (req, res, next) {
    //Enabling CORS
 
    res.set('Access-Control-Allow-Credentials', 'true')
-   res.set('Access-Control-Allow-Origin', '*')
-   res.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
+   // res.set('Access-Control-Allow-Origin', '*')
+   res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, PUT, POST')
    res.set('Access-Control-Allow-Headers', 'Content-Type')
  
    let allowedOrigins = ["https://sasta-bazaar.onrender.com","https://bbtracker.onrender.com", "http://localhost:4200"]
@@ -624,9 +627,65 @@ app.get('/get-dasboard-data', async (req, res) => {
       });
    })
 })
+app.get('/get-manage-roles', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await getManageRoles(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.post('/update-manage-roles', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await updateManageRoles(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+
+app.get('/get-all-user-details', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await getAllUserDetails(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.post('/approve-users', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await approveUser(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.post('/check-file-to-receive', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await checkFileToReceived(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
 
 
-
+// localhost:5000/get-manage-roles?user_id=10
 
 
 
