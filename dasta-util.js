@@ -84,7 +84,7 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
 
             //let newSentResults = await client.query(isPresent, [fts_id]);
 
-            if (action == 'Sent' || action == 'Received') {
+            if (action == 'Sent' || action == 'Received' || action == 'Assigned') {
                 // const fetchedCreateFile = newSentResults.rows[0];
                 let userDetails = await client.query(userQuery, [u_id]);
 
@@ -196,7 +196,16 @@ const createFile = async (req, res) => {
             , [file_title, 'Created', document_type, priority, subject_area, file_station, new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }), user_id, comments
                 , d_department, d_year, d_fileType
             ]);
-        res.status(201).json({ status: true, message: 'File Created', data: results.rows });
+
+        const createdDocket = results.rows;
+        const fts_id = parseInt(createdDocket[0].fts_id.split('FTS')[1])
+
+        const createdData = {
+            fts_id
+        }
+        const createUpdatedby = await updateTracking(createdData, 'Created');
+
+        res.status(201).json({ status: true, message: 'File Created', data: createdDocket });
     } finally {
         // Make sure to release the client before any error handling,
         // just in case the error handling itself throws an error.
@@ -226,12 +235,9 @@ const getCreatedFile = async (req, res) => {
 
 const receiveFile = async (req, res) => {
 
-    const { fts_id, user_id, comments, assignedUser } = req.body;
-
-
+    const { fts_id, user_id, comments, assignedUser, action } = req.body;
     const client = await pool.connect();
     try {
-
         const ftsId = parseInt(fts_id.split('FTS')[1]);
         const query = `SELECT data FROM public.track_file_details where fts_id= $1`;
         let results = await client.query(query, [ftsId]);
@@ -269,7 +275,17 @@ const receiveFile = async (req, res) => {
                     sent_to: '',
                     sent_date: receivedDate
                 }
-                const createUpdatedby = await updateTracking(sentData, 'Received')
+                const assignedData = {
+                    fts_id: ftsId,
+                    comments: comments,
+                    u_id: assignedUser,
+                    sent_to: '',
+                    sent_date: receivedDate
+                }
+
+
+                const createUpdatedby = await updateTracking(sentData, 'Received');
+                const createUpdatedby1 = await updateTracking(assignedData, 'Assigned');
                 res.status(201).json({ status: true, message: `${fts_id} received successfully` });
 
 
@@ -314,9 +330,9 @@ const checkFileToReceived = async (req, res) => {
                     let userQueryWithSameDepartmentResults = await client.query(userQueryWithSameDepartment, [fetchedUserData.department, true]);
                     const filequery = `SELECT concat('FTS', fts_id) as fts_id , file_title,concat('NITP/', d_department ,'/', d_year ,'/', d_file_type ,'/D', docket_number)  as  docket, file_status, document_type, priority, subject_area, file_station, creation_date, sent_date,sent_to   from created_file_details where fts_id=${ftsId}`
                     let filequeryResult = await client.query(filequery)
-        
+
                     if (userQueryWithSameDepartmentResults.rows.length) {
-                     const userMappedDetails= userQueryWithSameDepartmentResults.rows.map(r=> ({ ...r, name: `${r.name} (${r.user_name})`}))
+                        const userMappedDetails = userQueryWithSameDepartmentResults.rows.map(r => ({ ...r, name: `${r.name} (${r.user_name})` }))
 
                         const data = {
                             comments: sortedOrder[0].comments,
@@ -378,12 +394,12 @@ const sendFiles = async (req, res) => {
             sent_date: currentTime
         }
         // console.log("sent data", JSON.stringify(sentData)
-       const resujj = await updateTracking(sentData, 'Sent');
+        const resujj = await updateTracking(sentData, 'Sent');
 
         // }res.status
         // return { status: true, message };
         // };
-        const result = { status: true, message: 'File sent successfully' }
+        const result = { status: true, message: 'File sent successfully', remarks: resujj }
         // const result = await executeAllQuery();
 
         res.status(201).json(result);
@@ -410,8 +426,8 @@ const getReceiveFile = async (req, res) => {
          file_status, document_type, priority, subject_area,
           file_station, received_date, received_by, sent_to,
            sent_date,
-            receive_id
-         FROM public.received_file_details where received_by= $1`;
+            receive_id, assigned_to
+         FROM public.received_file_details where assigned_to= $1`;
         let results = await client.query(query, [user_id]);
 
         if (results.rows.length) {
@@ -465,7 +481,7 @@ const sendReceivedFiles = async (req, res) => {
         // }
         // return { status: true, message: 'All queries were sent' };
         // };
-        const result = { status: true, message: 'All queries were sent' }
+        const result = { status: true, message: 'All queries were sent', remarks: createUpdated }
         // const result = await executeAllQuery1();
         res.status(201).json(result);
 
