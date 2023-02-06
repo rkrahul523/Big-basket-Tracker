@@ -110,9 +110,46 @@ const getAllUserDetails = async (req, res) => {
         // just in case the error handling itself throws an error.
         client.release();
     }
-
-
 }
+
+
+
+
+const signUpUser = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { user_id } = req.query;
+
+        const loginDataQuery = `select role, department from logincred where u_id=$1`
+        let getRoleQuery = 'select u_id, user_name, name, role, department, status from logincred Where u_id != $1'
+        let results = await client.query(loginDataQuery, [user_id]);
+        if (results.rows.length) {
+            const currentUser = results.rows[0];
+            if (currentUser.role == 'Director') {
+                let credData = await client.query(getRoleQuery, [user_id]);
+                res.status(201).json({ status: true, message: 'Get all user  data are', data: credData.rows });
+            } else if (currentUser.role == 'Supervisor') {
+                getRoleQuery = getRoleQuery + ` and department=$2 and role!=('Director')`;
+                let credDataForSupervisor = await client.query(getRoleQuery, [user_id, currentUser.department]);
+                res.status(201).json({ status: true, message: 'Get all user  data are', data: credDataForSupervisor.rows });
+            }
+
+        } else {
+            //  const createUpdated = await updateTracking({ fts_id }, 'Created')
+            res.status(201).json({ status: false, message: `User doesnot exist` });
+        }
+    } finally {
+        // Make sure to release the client before any error handling,
+        // just in case the error handling itself throws an error.
+        client.release();
+    }
+}
+
+
+
+
+
+
 
 
 

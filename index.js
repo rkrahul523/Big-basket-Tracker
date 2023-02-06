@@ -24,6 +24,8 @@ const { createFile,
        getUserDetails,
        sendFiles,
        getReceiveFile,
+       getLastComment,
+       deleteFile,
        sendReceivedFiles,
        checkFileToReceived,
        getDashboardDetails,
@@ -41,7 +43,11 @@ app.use(function (req, res, next) {
    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, PUT, POST')
    res.set('Access-Control-Allow-Headers', 'Content-Type')
  
-   let allowedOrigins = ["https://sasta-bazaar.onrender.com","https://bbtracker.onrender.com", "http://localhost:4200"]
+   let allowedOrigins = [
+      "https://sasta-bazaar.onrender.com","https://bbtracker.onrender.com",
+       "http://localhost:4200",
+"https://dastaavez.onrender.com"
+]
    let origin = req.headers.origin;
    console.log(origin)
    if (allowedOrigins.includes(origin)) {
@@ -675,6 +681,29 @@ app.post('/approve-users', async (req, res) => {
 app.post('/check-file-to-receive', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await checkFileToReceived(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+
+app.post('/get-last-comment', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await getLastComment(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.post('/delete-file', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await deleteFile(req, res).catch(err => {
       res.status(500).json({
          status: false,
          error: true,

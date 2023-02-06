@@ -67,7 +67,7 @@ const getUserDetails = async (req, res) => {
 
 
 const updateTracking = async (data, action) => {  /// Sent, Received, Closed
-    const { fts_id, comments, u_id, sent_to, sent_date } = data;
+    const { fts_id, comments, u_id, sent_to, sent_date, receiveId } = data;
     const client = await pool.connect();
     try {
         const query = `SELECT data FROM public.track_file_details where fts_id= $1`;
@@ -84,7 +84,10 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
 
             //let newSentResults = await client.query(isPresent, [fts_id]);
 
-            if (action == 'Sent' || action == 'Received' || action == 'Assigned') {
+            if (action == 'Sent' || 
+            action == 'Received' || 
+            action == 'Assigned' || 
+            action == 'Rejected'  || action == 'Deleted') {
                 // const fetchedCreateFile = newSentResults.rows[0];
                 let userDetails = await client.query(userQuery, [u_id]);
 
@@ -100,6 +103,7 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
                     comments: comments,
                     remarks: '',
                     order: ++lastOrder,
+                    receiveId,
                     action_department: action == 'Sent' ? sent_to : ''
                 }
                 previousrecords.push(newtrackData)
@@ -235,7 +239,7 @@ const getCreatedFile = async (req, res) => {
 
 const receiveFile = async (req, res) => {
 
-    const { fts_id, user_id, comments, assignedUser, action } = req.body;
+    const { fts_id, user_id, comments, assignedUser, action, receiveId } = req.body;
     const client = await pool.connect();
     try {
         const ftsId = parseInt(fts_id.split('FTS')[1]);
@@ -250,46 +254,74 @@ const receiveFile = async (req, res) => {
             const sortedOrder = previousrecords.sort((a, b) => b.order - a.order);
 
             if (sortedOrder[0].status == 'Sent' && sortedOrder[0].action_department == fetchedUserData.department) {
-
-                /* create a row in received_file_details */
-
-                const insertCreatedQuery = `INSERT INTO received_file_details (fts_id,file_title, docket, file_status, document_type, priority, subject_area,
-                     file_station, received_date, received_by, assigned_to)
-                 SELECT  fts_id,file_title, concat('NITP/', d_department ,'/', d_year ,'/', d_file_type ,'/D', docket_number) as docket, $1, document_type, priority, subject_area, file_station, $2, $3, $4
-                  FROM created_file_details
-                        WHERE fts_id=${ftsId}`;
                 const receivedDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-                let insertCreatedQueryResult = await client.query(insertCreatedQuery, ['Received', receivedDate, user_id, assignedUser]);
 
-                /* update file_status in created_file_details as Operational*/
+                if (action == 'Received' || action == 'Rejected') {
 
-                const updatequery = `UPDATE created_file_details 
-                SET file_status= $1  WHERE fts_id=${ftsId}`;
-                let updatequeryresults = await client.query(updatequery
-                    , ['Operational']);
-                /* update tracking data*/
-                const sentData = {
-                    fts_id: ftsId,
-                    comments: comments,
-                    u_id: user_id,
-                    sent_to: '',
-                    sent_date: receivedDate
+
+                    const misRoutedAction = action == 'Rejected' ?
+                        previousrecords.length == 2 ? 'Declined' : action : action;
+                    /* create a row in received_file_details */
+                    if (misRoutedAction == 'Received' || misRoutedAction == 'Declined') {
+                        const insertCreatedQuery = `INSERT INTO received_file_details (fts_id,file_title, docket, file_status, document_type, priority, subject_area,
+                    file_station, received_date, received_by, assigned_to)
+                SELECT  fts_id,file_title, concat('NITP/', d_department ,'/', d_year ,'/', d_file_type ,'/D', docket_number) as docket, $1, document_type, priority, subject_area, file_station, $2, $3, $4
+                 FROM created_file_details
+                       WHERE fts_id=${ftsId}`;
+                        let insertCreatedQueryResult = await client.query(insertCreatedQuery, [misRoutedAction, receivedDate, user_id, action == 'Declined' ? user_id : assignedUser]);
+                    } else if (misRoutedAction == 'Rejected') {
+                        const rejectedquery = `UPDATE received_file_details 
+                    SET file_status= $1  WHERE receive_id=$2`;
+                        const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+                        let rejectedqueryresults = await client.query(rejectedquery
+                            , ['Rejected', receiveId]);
+                    }
+
+                    /* check whether it is directly created and sent */
+                    const fileStatusatSource = action == 'Rejected' ? action : 'Operational';
+                    if (previousrecords.length == 2) {
+                        /* update file_status in created_file_details as Operational and Rejected */
+                        const updatequery = `UPDATE created_file_details 
+                           SET file_status= $1  WHERE fts_id=${ftsId}`;
+                        let updatequeryresults = await client.query(updatequery
+                            , [fileStatusatSource]);
+                    }
+
+
+                    /* update tracking data*/
+                    const sentData = {
+                        fts_id: ftsId,
+                        comments: '',
+                        u_id: user_id,
+                        sent_to: '',
+                        sent_date: receivedDate
+                    }
+                    const assignedData = {
+                        fts_id: ftsId,
+                        comments: comments,
+                        u_id: assignedUser,
+                        sent_to: '',
+                        sent_date: receivedDate
+                    }
+
+                    if (action == 'Received') {
+                        const createUpdatedby = await updateTracking(sentData, 'Received');
+                        const createUpdatedby1 = await updateTracking(assignedData, 'Assigned');
+                        res.status(201).json({ status: true, message: `${fts_id} received successfully` });
+
+                    }
+                    else if (action == 'Rejected') {
+                        sentData.comments = comments;
+                        const createUpdatedby2 = await updateTracking(sentData, 'Rejected');
+                        res.status(201).json({ status: true, message: `${fts_id} Rejected ` });
+
+                    }
+
+
                 }
-                const assignedData = {
-                    fts_id: ftsId,
-                    comments: comments,
-                    u_id: assignedUser,
-                    sent_to: '',
-                    sent_date: receivedDate
+                else {
+                    res.status(201).json({ status: false, message: `Not a valid ACtion ${fts_id}` });
                 }
-
-
-                const createUpdatedby = await updateTracking(sentData, 'Received');
-                const createUpdatedby1 = await updateTracking(assignedData, 'Assigned');
-                res.status(201).json({ status: true, message: `${fts_id} received successfully` });
-
-
-
             } else {
                 res.status(201).json({ status: false, message: `You are not authorised to receive ${fts_id}` });
             }
@@ -335,8 +367,7 @@ const checkFileToReceived = async (req, res) => {
                         const userMappedDetails = userQueryWithSameDepartmentResults.rows.map(r => ({ ...r, name: `${r.name} (${r.user_name})` }))
 
                         const data = {
-                            comments: sortedOrder[0].comments,
-                            previousStatus: sortedOrder[0].status,
+                            lastComment: sortedOrder[0],
                             availableUser: userMappedDetails,
                             fileData: filequeryResult.rows[0]
                         }
@@ -370,8 +401,6 @@ const sendFiles = async (req, res) => {
 
 
     const { file_info, u_id } = req.body;
-
-
     const client = await pool.connect();
     try {
         let info = file_info[0];
@@ -391,7 +420,8 @@ const sendFiles = async (req, res) => {
             comments: info.comments,
             u_id: u_id,
             sent_to: info.sent_to,
-            sent_date: currentTime
+            sent_date: currentTime,
+            receiveId: null
         }
         // console.log("sent data", JSON.stringify(sentData)
         const resujj = await updateTracking(sentData, 'Sent');
@@ -472,7 +502,8 @@ const sendReceivedFiles = async (req, res) => {
             comments: info.comments,
             u_id: u_id,
             sent_to: info.sent_to,
-            sent_date: currentTime
+            sent_date: currentTime,
+            receiveId: info.receive_id
         }
 
 
@@ -528,11 +559,95 @@ const getDashboardDetails = async (req, res) => {
 }
 
 
+const getLastComment = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const ftsId = req.body.fts_id;
+        if (ftsId.includes('FTS')) {
+            const fts_id = parseInt(ftsId.split('FTS')[1])
+
+            const query = `SELECT data FROM public.track_file_details where fts_id= $1`;
+            let results = await client.query(query, [fts_id]);
+            if (results.rows.length) {
+
+                let previousrecords = results.rows[0].data;
+                const sortedOrder = previousrecords.sort((a, b) => b.order - a.order);
+
+                const data = {
+                    lastComment: sortedOrder[0]
+                }
+                res.status(201).json({ status: true, message: 'Dashbboard data are', data: data });
+            } else {
+                const createUpdated = await updateTracking({ fts_id }, 'Created')
+                res.status(201).json(createUpdated);
+            }
+        }
+        else {
+            res.status(201).json({ status: false, message: 'FTS Id  is Invalid' });
+
+        }
+    } finally {
+        // Make sure to release the client before any error handling,
+        // just in case the error handling itself throws an error.
+        client.release();
+    }
+}
+
+
+
+
+
+
+const deleteFile = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { fts_id, user_id } = req.body;
+        if (fts_id.includes('FTS')) {
+            const ftsId = parseInt(fts_id.split('FTS')[1])
+            // check whether file is originally in Created or Rejected stage
+            const filequery = `SELECT file_status, created_by from created_file_details where fts_id=${ftsId}`
+            let filequeryResult = await client.query(filequery)
+
+            if (filequeryResult.rows.length && (filequeryResult.rows[0].file_status == "Created" || filequeryResult.rows[0].file_status == "Rejected" || filequeryResult.rows[0].file_status == "Sent")) {
+                const query = `UPDATE created_file_details 
+               SET file_status= $1  WHERE fts_id=$2`;
+                const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+                let results = await client.query(query, ['Deleted', ftsId]);
+                      
+                const sentData = {
+                    fts_id: ftsId,
+                    comments: null,
+                    u_id: filequeryResult.rows[0].created_by,
+                    sent_to: null,
+                    sent_date: currentTime,
+                    receiveId: null
+                }
+                // console.log("sent data", JSON.stringify(sentData)
+                const deleteTracking = await updateTracking(sentData, 'Deleted');
+
+                res.status(201).json({ status: true, message: `File ${fts_id} deleted successfully` });
+            } else {
+                res.status(201).json({ status: false, message: `Unable to delete File ${fts_id}` });
+            }
+        }
+        else {
+            res.status(201).json({ status: false, message: 'FTS Id  is Invalid' });
+        }
+    } finally {
+        // Make sure to release the client before any error handling,
+        // just in case the error handling itself throws an error.
+        client.release();
+    }
+
+
+}
+
+
 
 
 
 
 
 module.exports = {
-    createFile, validateUserDetails, getTrackingDetails, getCreatedFile, getUserDetails, sendFiles, receiveFile, sendReceivedFiles, getReceiveFile, getDashboardDetails, checkFileToReceived
+    getLastComment, createFile, validateUserDetails, getTrackingDetails, getCreatedFile, getUserDetails, sendFiles, receiveFile, sendReceivedFiles, getReceiveFile, getDashboardDetails, checkFileToReceived, deleteFile
 };
