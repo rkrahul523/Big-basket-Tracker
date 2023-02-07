@@ -30,37 +30,97 @@ const { createFile,
        checkFileToReceived,
        getDashboardDetails,
        receiveFile} = require('./dasta-util.js')
-const { getManageRoles , updateManageRoles, approveUser, getAllUserDetails
+const { getManageRoles ,
+    updateManageRoles,
+     approveUser,
+      getAllUserDetails,
+      signUpUser,
+      isAuthenticatedUser
+
 } = require('./user-functions.js')
 
 // app.use(cors({credentials: true, origin: 'http://localhost:4200'}));
 
-app.use(function (req, res, next) {
+app.use(async (req, res, next) =>{
    //Enabling CORS
 
    res.set('Access-Control-Allow-Credentials', 'true')
    // res.set('Access-Control-Allow-Origin', '*')
    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, PUT, POST')
-   res.set('Access-Control-Allow-Headers', 'Content-Type')
+   res.set('Access-Control-Allow-Headers', '*')
  
    let allowedOrigins = [
       "https://sasta-bazaar.onrender.com","https://bbtracker.onrender.com",
-       "http://localhost:4200",
-"https://dastaavez.onrender.com"
+      "http://localhost:4200",
+      "https://dastaavez.onrender.com"
 ]
    let origin = req.headers.origin;
-   console.log(origin)
    if (allowedOrigins.includes(origin)) {
       res.header("Access-Control-Allow-Origin", origin); // restrict it to the required domain
    }
 
+   // res.json({status: 503})
+
+   // res.status(503).json({
+   //    status: false,
+   //    error: true,
+   //    // "code": err.code,
+   //    // "message": err.message
+   // });
+   // var err = new Error('Not Found');
+   // err.status = 404;
    next();
+   // const getall = await isAuthenticatedUser(req, res, next).catch(err => {
+   //    console.log("error catched", err)
+   //    res.status(401).json({
+   //       status: false,
+   //       error: true,
+   //       "code": err.code,
+   //       "message": err.message
+   //    });
+   // })
+
+
+//   next();
 });
 
+ 
+ // error handlers
+ 
+app.get('*',async (req,res,next)=>{
+
+   const getall = await isAuthenticatedUser(req, res, next).catch(err => {
+         console.log("error catched", err)
+         res.status(401).json({
+            status: false,
+            error: true,
+            "code": err.code,
+            "message": err.message
+         });
+      })
+
+})
+app.post('*',async (req,res,next)=>{
+
+   const getall = await isAuthenticatedUser(req, res, next).catch(err => {
+         console.log("error catched", err)
+         res.status(401).json({
+            status: false,
+            error: true,
+            "code": err.code,
+            "message": err.message
+         });
+      })
+
+})
+
+ 
 
 //  app.use(cors({credentials: false, origin: true}));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+
 
 
 
@@ -710,6 +770,21 @@ app.post('/delete-file', async (req, res) => {
          "code": err.code,
          "message": err.message
       });
+   })
+})
+app.post('/signUpUser', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await signUpUser(req, res).catch(err => {
+      if(err && err.code== "23505"){
+         res.status(201).json({ status: false, message: 'User already Exists for this Email', headerText: 'Sign Up Failed!!'}); 
+      }else{
+      res.status(500).json({
+         status: false,
+         error: true,
+         "code": err.code,
+         "message": err.message
+      });
+   }
    })
 })
 

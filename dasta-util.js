@@ -8,22 +8,42 @@ const pool = new Pool({
 });
 
 
+
+
 const validateUserDetails = async (req, res) => {
     const name = req.body.username;
     const password = req.body.password;
 
     const client = await pool.connect();
     try {
-        const query = `SELECT u_id,password FROM logincred  WHERE user_name=$1`;
+   
+        const query = `SELECT u_id,password,name, department, user_name,role,status,is_active FROM logincred  WHERE user_name=$1`;
         let results = await client.query(query, [name.toLowerCase()]);
         if (results.rows.length) {
-            if (results.rows[0].password == password) {
-                res.status(201).json({ status: true, message: 'Login successful', token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ${results.rows[0].u_id}` });
-            } else {
-                res.status(201).json({ status: false, message: 'Wrong Password' });
+            const userData = results.rows[0];
+
+            if (userData.status == 'Approved') {
+
+                if (userData.is_active) {
+
+                    if (userData.password == password) {
+                        delete userData.password;
+                        res.status(201).json({ status: true, message: 'Successfully Logged In ', token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ${userData.u_id}`, headerText: 'Login Success',  data: userData});
+                    } else {
+                        res.status(201).json({ status: false, message: 'Wrong Password', headerText: 'Login Error' });
+                    }
+                }
+                else {
+                    res.status(201).json({ status: false, message: 'Your Id is Inactive', headerText: 'Contact your Supervisor' });
+                }
+            } else if (userData.status == 'Created') {
+                res.status(201).json({ status: false, message: 'Your Id is pending for Approval', headerText: 'Contact your Supervisor' });
+            }
+            else if (userData.status == 'Rejected') {
+                res.status(201).json({ status: false, message: 'Your Id is Rejected by your Supervisor', headerText: 'Contact your Supervisor' });
             }
         } else {
-            res.status(201).json({ status: false, message: 'User doesn\'t exist' });
+            res.status(201).json({ status: false, message: 'User doesn\'t exist', headerText: 'Login Error'});
         }
 
     } finally {
@@ -44,7 +64,7 @@ const getUserDetails = async (req, res) => {
     try {
         const username = req.body.username.toLowerCase();
 
-        const query = `SELECT u_id, name, department, user_name FROM public.logincred  WHERE u_id=$1`;
+        const query = `SELECT u_id, name, department, user_name,role FROM public.logincred  WHERE u_id=$1`;
         let results = await client.query(query, [u_id]);
         if (results.rows.length) {
             if (username == results.rows[0].user_name) {
@@ -84,10 +104,10 @@ const updateTracking = async (data, action) => {  /// Sent, Received, Closed
 
             //let newSentResults = await client.query(isPresent, [fts_id]);
 
-            if (action == 'Sent' || 
-            action == 'Received' || 
-            action == 'Assigned' || 
-            action == 'Rejected'  || action == 'Deleted') {
+            if (action == 'Sent' ||
+                action == 'Received' ||
+                action == 'Assigned' ||
+                action == 'Rejected' || action == 'Deleted') {
                 // const fetchedCreateFile = newSentResults.rows[0];
                 let userDetails = await client.query(userQuery, [u_id]);
 
@@ -613,7 +633,7 @@ const deleteFile = async (req, res) => {
                SET file_status= $1  WHERE fts_id=$2`;
                 const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
                 let results = await client.query(query, ['Deleted', ftsId]);
-                      
+
                 const sentData = {
                     fts_id: ftsId,
                     comments: null,
