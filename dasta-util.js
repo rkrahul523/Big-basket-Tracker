@@ -17,7 +17,7 @@ const validateUserDetails = async (req, res) => {
     const client = await pool.connect();
     try {
    
-        const query = `SELECT u_id,password,name, department, user_name,role,status,is_active FROM logincred  WHERE user_name=$1`;
+        const query = `SELECT u_id,password,name, department, user_name,role,status,is_active, last_updated FROM logincred  WHERE user_name=$1`;
         let results = await client.query(query, [name.toLowerCase()]);
         if (results.rows.length) {
             const userData = results.rows[0];
@@ -28,7 +28,7 @@ const validateUserDetails = async (req, res) => {
 
                     if (userData.password == password) {
                         delete userData.password;
-                        res.status(201).json({ status: true, message: 'Successfully Logged In ', token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ${userData.u_id}`, headerText: 'Login Success',  data: userData});
+                        res.status(201).json({ status: true, message: 'Successfully Logged In', token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ${userData.u_id}`, headerText: 'Login Success',  data: userData});
                     } else {
                         res.status(201).json({ status: false, message: 'Wrong Password', headerText: 'Login Error' });
                     }
@@ -553,7 +553,7 @@ const getDashboardDetails = async (req, res) => {
         // const fts_id = parseInt(ftsId.split('FTS')[1])
 
         const dashboardDataQuery = `select a.file_status, count(b.file_status) 
-          from (values ('Sent'), ('Created'), ('Operational')) as a(file_status)
+          from (values ('Sent'), ('Created'), ('Operational'), ('Deleted')) as a(file_status)
          left outer join created_file_details as b on b.file_status = a.file_status
          group by a.file_status;`
 
