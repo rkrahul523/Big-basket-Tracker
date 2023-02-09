@@ -7,7 +7,7 @@ const pool = new Pool({
     port: 5432,
 });
 
-
+const securityToken= 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ';
 
 
 const validateUserDetails = async (req, res) => {
@@ -28,7 +28,7 @@ const validateUserDetails = async (req, res) => {
 
                     if (userData.password == password) {
                         delete userData.password;
-                        res.status(201).json({ status: true, message: 'Successfully Logged In', token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ${userData.u_id}`, headerText: 'Login Success',  data: userData});
+                        res.status(201).json({ status: true, message: 'Successfully Logged In', token: `${securityToken}${userData.u_id}`, headerText: 'Login Success',  data: userData});
                     } else {
                         res.status(201).json({ status: false, message: 'Wrong Password', headerText: 'Login Error' });
                     }
@@ -59,7 +59,7 @@ const validateUserDetails = async (req, res) => {
 const getUserDetails = async (req, res) => {
     const token = req.body.token;
     // added for additional security;
-    const u_id = parseInt(token.slice(-1));
+    const u_id = parseInt(token.split(securityToken)[1]);
     const client = await pool.connect();
     try {
         const username = req.body.username.toLowerCase();

@@ -7,6 +7,7 @@ const pool = new Pool({
     port: 5432,
 });
 
+const securityToken= 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ';
 
 const updateManageRoles = async (req, res) => {
     const client = await pool.connect();
@@ -166,9 +167,9 @@ const isAuthenticatedUser = async (req, res, next) => {
 
             const token = req.get('token');
             const userId = req.headers?.user;
-            if (token && userId && typeof token == 'string' && typeof userId == 'string') {
+            if (token && userId && typeof token == 'string' && typeof userId == 'string' && token.includes(securityToken)) {
 
-                const u_id = parseInt(token.slice(-1));
+                const u_id = parseInt(token.split(securityToken)[1]);
                 const query = `SELECT name, is_active , status  FROM logincred  WHERE u_id=$1`;
                 let results = await client.query(query, [u_id]);
                 if (results.rows.length) {
