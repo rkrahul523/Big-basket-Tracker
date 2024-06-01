@@ -89,15 +89,15 @@ app.use(async (req, res, next) =>{
  
 app.get('*',async (req,res,next)=>{
 
-   const getall = await isAuthenticatedUser(req, res, next).catch(err => {
-         console.log("error catched", err)
-         res.status(401).json({
-            status: false,
-            error: true,
-            "code": err.code,
-            "message": err.message
-         });
-      })
+   // const getall = await isAuthenticatedUser(req, res, next).catch(err => {
+   //       console.log("error catched", err)
+   //       res.status(401).json({
+   //          status: false,
+   //          error: true,
+   //          "code": err.code,
+   //          "message": err.message
+   //       });
+   //    })
 
 })
 app.post('*',async (req,res,next)=>{
