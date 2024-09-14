@@ -41,8 +41,8 @@ const { getManageRoles ,
 } = require('./user-functions.js')
 
 const { addDakFile ,
-   getAllDakFile,
-   updateDakFile,deleteDakFile,addComment, authenticateUser, validateUserDet
+   getAllDakFile,getALLTimeTable,
+   updateDakFile,deleteDakFile,addComment, authenticateUser, validateUserDet, addTimeTable
 } = require('./dak.js')
 
 
@@ -147,6 +147,18 @@ app.post('*',async (req,res,next)=>{
 
 //Dastavez api
 
+app.post('/add-time-table', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await addTimeTable(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error:true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+
 app.post('/addDak', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await addDakFile(req, res).catch(err => {
@@ -208,6 +220,17 @@ app.post('/updatedDak', async (req, res) => {
 app.get('/getAllDak', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await getAllDakFile(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error:true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.get('/get-all-time-table', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await getALLTimeTable(req, res).catch(err => {
       res.status(500).json({
          status: false,
          error:true,

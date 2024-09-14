@@ -12,6 +12,62 @@ const db=admin.firestore();
 var dakDB=db.collection("DAK_LIST");
 var userDB=db.collection("User_list");
 
+var coursesDB=db.collection("Courses");
+
+
+const addTimeTable= async (req, res) => {
+    // const client = await pool.connect();
+    try {
+        const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+       const timetableData= req.body.timeData;
+       const userref=await coursesDB.doc(timetableData.course.toString()).get();
+       let dbdata=userref.data()
+       let extData=[]
+       const filter=dbdata[`${timetableData.day}`].filter(v=>(v.startTime== timetableData.startTime || v.endTime== timetableData.endTime))
+       if(filter.length){
+        res.status(500).json({ status: false, message: 'already present', headerText: 'added timetable' });
+
+       }else{
+       if(`${timetableData.day}` in dbdata){
+        extData=dbdata[`${timetableData.day}`];
+        extData.push(timetableData);
+       }else{
+        extData=[timetableData]
+       }
+      
+        const response=await coursesDB.doc(timetableData.course.toString()).update({[`${timetableData.day}`]: extData});
+        res.status(201).json({ status: true, message: 'timetable added successfully', headerText: 'added timetable' });
+    }
+    } finally {
+        // Make sure to release the client before any error handling,
+        // just in case the error handling itself throws an error.
+        // 
+    }
+
+
+}
+
+
+
+const getALLTimeTable = async (req, res) => {
+    try {
+        const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+        const response=coursesDB;
+        const resp= await response.get();
+        let resarr=[];
+        resp.forEach(doc=>{
+            // console.log(doc.id)
+            resarr.push({[doc.id]:doc.data()})
+        })
+        res.status(201).json({ status: true ,data:resarr });
+    } finally {
+        // Make sure to release the client before any error handling,
+        // just in case the error handling itself throws an error.
+        // 
+    }
+
+
+}
 
 const updateDakFile = async (req, res) => {
     // const client = await pool.connect();
@@ -120,8 +176,11 @@ const getAllDakFile = async (req, res) => {
         const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
         const response=dakDB;
         const resp= await response.get();
+       
+
         let resarr=[];
         resp.forEach(doc=>{
+           
             resarr.push(doc.data())
         })
         res.status(201).json({ status: true ,data:resarr });
@@ -139,8 +198,10 @@ const getAllDakFile = async (req, res) => {
 
 let byPassUrls = [
     '/validate-user-details',
+    '/add-time-table',
     // '/get-dasboard-data',
-    '/signUpUser'
+    '/signUpUser',
+    '/get-all-time-table'
 ]
 const securityToken= 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ';
 
@@ -230,5 +291,5 @@ const authenticateUser = async (req, res, next) => {
 
 
 module.exports = {
-    addDakFile,getAllDakFile,updateDakFile,deleteDakFile,addComment, authenticateUser, validateUserDet
+    getALLTimeTable, addTimeTable,  addDakFile,getAllDakFile,updateDakFile,deleteDakFile,addComment, authenticateUser, validateUserDet
 };
