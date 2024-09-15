@@ -22,8 +22,9 @@ const addTimeTable= async (req, res) => {
        const timetableData= req.body.timeData;
        const userref=await coursesDB.doc(timetableData.course.toString()).get();
        let dbdata=userref.data()
+    //    console.log(dbdata)
        let extData=[]
-       const filter=dbdata[`${timetableData.day}`].filter(v=>(v.startTime== timetableData.startTime || v.endTime== timetableData.endTime))
+       const filter=`${timetableData.day}` in dbdata ? dbdata[`${timetableData.day}`].filter(v=>(v.startTime== timetableData.startTime || v.endTime== timetableData.endTime)) :[];
        if(filter.length){
         res.status(500).json({ status: false, message: 'already present', headerText: 'added timetable' });
 
