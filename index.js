@@ -40,7 +40,7 @@ const { getManageRoles ,
 
 } = require('./user-functions.js')
 
-const { addDakFile ,
+const { getAllLeaveData, addDakFile ,addLeave,
    getAllDakFile,getALLTimeTable,
    updateDakFile,deleteDakFile,addComment, authenticateUser, validateUserDet, addTimeTable
 } = require('./dak.js')
@@ -78,6 +78,7 @@ app.use(async (req, res, next) =>{
    // });
    // var err = new Error('Not Found');
    // err.status = 404;
+ 
    next();
    // const getall = await isAuthenticatedUser(req, res, next).catch(err => {
    //    console.log("error catched", err)
@@ -88,6 +89,7 @@ app.use(async (req, res, next) =>{
    //       "message": err.message
    //    });
    // })
+
 
 
 //   next();
@@ -231,6 +233,28 @@ app.get('/getAllDak', async (req, res) => {
 app.get('/get-all-time-table', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await getALLTimeTable(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error:true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.get('/addLeave', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await addLeave(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error:true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.get('/getAllLeaveData', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await getAllLeaveData(req, res).catch(err => {
       res.status(500).json({
          status: false,
          error:true,
