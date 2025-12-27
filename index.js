@@ -252,7 +252,7 @@ app.get('/addLeave', async (req, res) => {
       });
    })
 })
-app.get('/getAllLeaveData', async (req, res) => {
+app.post('/getAllLeaveData', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await getAllLeaveData(req, res).catch(err => {
       res.status(500).json({

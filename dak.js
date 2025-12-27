@@ -134,7 +134,7 @@ const addLeave = async (req, res) => {
 }
 
 const getAllLeaveData = async (req, res) => {
-     const department=req.body.EmployeeName;
+     const department=req.body.department;
     try {
        
             const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
@@ -326,6 +326,7 @@ let byPassUrls = [
     '/validate-user-details',
     '/add-time-table',
     // '/get-dasboard-data',
+    '/getAllLeaveData',
     '/signUpUser',
     '/get-all-time-table'
 ]
