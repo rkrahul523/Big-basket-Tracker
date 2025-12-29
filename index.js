@@ -61,7 +61,9 @@ app.use(async (req, res, next) =>{
    let allowedOrigins = [
       "https://sasta-bazaar.onrender.com","https://bbtracker.onrender.com",
       "http://localhost:4200",
-      "https://dastaavez.onrender.com"
+      "https://dastaavez.onrender.com",
+      "https://suvidha-605w.onrender.com",
+      "https://suvida.netlify.app"
 ]
    let origin = req.headers.origin;
    if (allowedOrigins.includes(origin)) {
