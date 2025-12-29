@@ -61,7 +61,7 @@ const addLeave = async (req, res) => {
     //     day:0.5,
     //     isHalfDay: true,
     // }
-    const department= req.body.EmployeeName;//'FFT';
+    const department= req.body.department;//'FFT';
     const typeOfLeave=req.body.leaveType//"CL";
     const empId=req.body.id
     const initialJson= {
@@ -70,6 +70,8 @@ const addLeave = async (req, res) => {
         CL:[],
         EL:[],
        HPL:[],
+       VL:[],
+       UL:[],
     }
     try {
         const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
@@ -84,6 +86,35 @@ const addLeave = async (req, res) => {
     if (!docSnap.exists) {    
         console.log('✅not found');
       await leaveDB.doc(department).collection('1').doc(String(empId)).set(initialJson);
+      const docSnap = await leaveDB.doc(department).collection('1').doc(String(empId)).get();
+      const existingData = docSnap.data();
+      // Add new leave to CL array (doc 1 data)
+      const newLeave = typeOfLeave== "CL" ? {
+        dateFrom:req.body.dateFrom,
+        dateTo:req.body.dateTo,
+        day:req.body.day,
+        isHalfDay: req.body.isHalfDay,
+        leaveId: req.body.leaveId
+      } :{
+        dateFrom:req.body.dateFrom,
+        dateTo:req.body.dateTo,
+        day:req.body.day,
+        leaveId: req.body.leaveId
+      };
+      
+
+
+    if(isLeaveDateOverlap(existingData[`${typeOfLeave}`], { dateFrom:req.body.dateFrom, dateTo:req.body.dateTo })){
+        res.status(500).json({ status: false, message: 'already present', headerText: 'added timetable' });
+
+    }else{
+        await leaveDB.doc(department).collection('1').doc(String(empId)).update({
+            [`${typeOfLeave}`]: [...(existingData[`${typeOfLeave}`] || []), newLeave]  // Append to CL array
+          });
+
+          res.status(201).json({ status: true, message: 'leave added successfully', headerText: 'added leave' });
+       
+    }
     } else {
       // ✅ Step 3: doc('3') EXISTS → UPDATE CL array (add to doc 1)
       console.log('✅ Updating existing CL array');
@@ -106,7 +137,7 @@ const addLeave = async (req, res) => {
       
 
 
-    if(isLeaveDateOverlap(existingData[`${typeOfLeave}`], { dateFrom:'31-12-2025', dateTo:'31-12-2025' })){
+    if(isLeaveDateOverlap(existingData[`${typeOfLeave}`], { dateFrom:req.body.dateFrom, dateTo:req.body.dateTo })){
         res.status(500).json({ status: false, message: 'already present', headerText: 'added timetable' });
 
     }else{
@@ -175,6 +206,61 @@ const getAllLeaveData = async (req, res) => {
 
 
 }
+
+const deleteLeave = async (req, res) =>{
+    try {
+
+        // {
+        //     employee: "Dr. K.K. Singh"
+        //     fromDate : "02-12-2025"
+        //     id : 2
+        //     leaveId: "17668440628402"
+        //     toDate : "03-12-2025"
+        //     type : "EL"
+        //   }
+      const department = req.body.department; // 'FFT'
+      const empId = req.body.id;              // employee ID
+      const leaveId = req.body.leaveId;       // unique leaveId to delete
+      const typeOfLeave = req.body.type; // 'CL', 'EL', etc.
+  
+      // Step 1: Check if document exists
+      const docSnap = await leaveDB.doc(department).collection('1').doc(String(empId)).get();
+      
+      if (!docSnap.exists) {
+        return res.status(404).json({ error: 'Employee document not found' });
+      }
+  
+      const existingData = docSnap.data();
+      
+      // Step 2: Find and remove the specific leave by leaveId
+      if (existingData[typeOfLeave]) {
+        // Filter out the leave with matching leaveId
+        existingData[typeOfLeave] = existingData[typeOfLeave].filter((leave) => 
+          leave.leaveId !== leaveId
+        );
+        
+        // Step 3: Update the document with filtered array
+        await leaveDB.doc(department).collection('1').doc(String(empId)).update(existingData);
+        
+        console.log(`✅ Deleted leave ${leaveId} from ${typeOfLeave} for employee ${empId}`);
+        return res.status(200).json({ 
+            status: true,
+          message: 'Leave deleted successfully',
+          deletedLeaveId: leaveId 
+        });
+
+        
+      } else {
+        return res.status(404).json({status: false, error: `No ${typeOfLeave} leaves found for employee` });
+      }
+  
+    } catch (error) {
+      console.error('❌ Delete leave error:', error);
+      res.status(500).json({ status: false ,error: 'Failed to delete leave', details: error.message });
+    }
+  }
+  
+
 const getALLTimeTable = async (req, res) => {
     try {
         const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
@@ -224,6 +310,7 @@ const updateDakFile = async (req, res) => {
 
 
 }
+
 
 
 const addComment = async (req, res) => {
@@ -326,8 +413,11 @@ let byPassUrls = [
     '/validate-user-details',
     '/add-time-table',
     // '/get-dasboard-data',
-    '/getAllLeaveData',
-    '/signUpUser',
+    // '/getAllLeaveData',
+    // '/signUpUser',
+    // '/addLeave',
+    // '/deleteLeave',
+    '/validateLogin',
     '/get-all-time-table'
 ]
 const securityToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ';
@@ -416,6 +506,7 @@ const authenticateUser = async (req, res, next) => {
 }
 
 
+
 function isLeaveDateOverlap(leaves, checkDateRange) {
     const parseDate = (dateStr) => {
         const [day, month, year] = dateStr.split('-');
@@ -443,5 +534,5 @@ function isLeaveDateOverlap(leaves, checkDateRange) {
 
 
 module.exports = {
-    getAllLeaveData,  addLeave, getALLTimeTable, addTimeTable, addDakFile, getAllDakFile, updateDakFile, deleteDakFile, addComment, authenticateUser, validateUserDet
+    deleteLeave, getAllLeaveData,  addLeave, getALLTimeTable, addTimeTable, addDakFile, getAllDakFile, updateDakFile, deleteDakFile, addComment, authenticateUser, validateUserDet
 };

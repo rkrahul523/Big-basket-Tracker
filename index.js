@@ -40,7 +40,7 @@ const { getManageRoles ,
 
 } = require('./user-functions.js')
 
-const { getAllLeaveData, addDakFile ,addLeave,
+const { deleteLeave, getAllLeaveData, addDakFile ,addLeave,
    getAllDakFile,getALLTimeTable,
    updateDakFile,deleteDakFile,addComment, authenticateUser, validateUserDet, addTimeTable
 } = require('./dak.js')
@@ -172,7 +172,7 @@ app.post('/addDak', async (req, res) => {
       });
    })
 })
-app.post('/validate-user-details', async (req, res) => {
+app.post('/validateLogin', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await validateUserDet(req, res).catch(err => {
       res.status(500).json({
@@ -241,9 +241,20 @@ app.get('/get-all-time-table', async (req, res) => {
       });
    })
 })
-app.get('/addLeave', async (req, res) => {
+app.post('/addLeave', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await addLeave(req, res).catch(err => {
+      res.status(500).json({
+         status: false,
+         error:true,
+         "code": err.code,
+         "message": err.message
+      });
+   })
+})
+app.post('/deleteLeave', async (req, res) => {
+  // details.mob = req.body.mob;
+   const getall = await deleteLeave(req, res).catch(err => {
       res.status(500).json({
          status: false,
          error:true,
