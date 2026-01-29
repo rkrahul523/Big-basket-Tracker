@@ -401,7 +401,7 @@ let byPassUrls = [
     // '/getAllLeaveData',
     // '/signUpUser',
     // '/addLeave',
-    '/healtz',
+    '/healthz',
     '/validateLogin',
     '/get-all-time-table'
 ]
