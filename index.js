@@ -232,6 +232,22 @@ app.get('/getAllDak', async (req, res) => {
       });
    })
 })
+app.get('/healthz', async (req, res) => {
+   try {
+     // Optional: Add critical checks like DB connectivity here
+     // e.g., await checkDatabaseConnection();
+     
+     res.status(200).json({
+       status: 'ok',
+       code: 'healthy',
+       message: 'Service running fine'
+     });
+   } catch (error) {
+     // Fail fast on errors to signal unhealthy state
+     res.status(500).json({ status: 'error', message: 'Health check failed' });
+   }
+ });
+ 
 app.get('/get-all-time-table', async (req, res) => {
   // details.mob = req.body.mob;
    const getall = await getALLTimeTable(req, res).catch(err => {
